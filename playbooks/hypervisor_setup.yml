@@ -2,10 +2,65 @@
 - name: Intial hypervisor setup
   hosts: all
   become: true
-
+  vars:
+    # VM Configuration
+    vm_name: "cisco-switch-1"
+    vm_memory: 4096
+    vm_vcpus: 4
+    
+    # Image Paths
+    local_qcow2_path: "/aap/c8000v.qcow2"
+    remote_qcow2_path: "/var/lib/libvirt/images/{{ vm_name }}.qcow2"
+    
+    # Networking and OS
+    libvirt_network: "default"
+    os_variant: "rhel9.0"
+    
   tasks:
-    - name: Set authorized key without validating the TLS/SSL certificates
+    - name: Set authorized key 
       ansible.posix.authorized_key:
         user: lab-user
         state: present
         key: https://github.com/cmedeirorh.keys
+
+    - name: Install virtualization packages
+      ansible.builtin.dnf:
+        name:
+          - qemu-kvm
+          - libvirt
+          - virt-install
+          - python3-libvirt
+        state: present
+
+    - name: Ensure libvirtd service is started and enabled
+      ansible.builtin.systemd:
+        name: libvirtd
+        state: started
+        enabled: yes
+
+    - name: Copy qcow2 base image to the virtualization host
+      ansible.builtin.copy:
+        src: "{{ local_qcow2_path }}"
+        dest: "{{ remote_qcow2_path }}"
+        owner: qemu
+        group: qemu
+        mode: '0644'
+
+    - name: Check if the VM is already defined
+      ansible.builtin.command: virsh domstate "{{ vm_name }}"
+      register: vm_state
+      ignore_errors: true
+      changed_when: false
+
+    - name: Deploy the virtual machine
+      ansible.builtin.command: >
+        virt-install
+        --name "{{ vm_name }}"
+        --memory "{{ vm_memory }}"
+        --vcpus "{{ vm_vcpus }}"
+        --disk path="{{ remote_qcow2_path }}",format=qcow2,bus=virtio
+        --import
+        --os-variant "{{ os_variant }}"
+        --network network="{{ libvirt_network }}",model=virtio
+        --noautoconsole
+      when: vm_state.rc != 0

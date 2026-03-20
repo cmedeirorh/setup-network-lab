@@ -42,6 +42,7 @@
       ansible.builtin.copy:
         src: "{{ local_qcow2_path }}"
         dest: "{{ remote_qcow2_path }}"
+        remote_src: yes
         owner: qemu
         group: qemu
         mode: '0644'

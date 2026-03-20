@@ -45,8 +45,8 @@
         owner: qemu
         group: qemu
         mode: '0644'
-      delegate_to: localhost
-
+        remote_src: true
+  
     - name: Check if the VM is already defined
       ansible.builtin.command: virsh domstate "{{ vm_name }}"
       register: vm_state

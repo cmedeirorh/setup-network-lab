@@ -9,7 +9,7 @@
     vm_vcpus: 4
     
     # Image Paths
-    gdrive_file_id: "1mGxPlh-LhkJMvL2fOLOT1tvZuSIRQZaj"
+    local_qcow2_path: "/tmp/c8000v.qcow2"
     remote_qcow2_path: "/var/lib/libvirt/images/{{ vm_name }}.qcow2"
     
     # Networking and OS
@@ -37,17 +37,14 @@
         name: libvirtd
         state: started
         enabled: yes
-
-    - name: Install gdown via pip to handle large Google Drive downloads
-      ansible.builtin.pip:
-        name: gdown
-        executable: pip3
-        
+     
     - name: Copy qcow2 base image to the virtualization host
-      ansible.builtin.command:
-        gdown --id "{{ gdrive_file_id }}" -O "{{ remote_qcow2_path }}"
-      args:
-        creates: "{{ remote_qcow2_path }}"
+      ansible.builtin.copy:
+        src: "{{ local_qcow2_path }}"
+        dest: "{{ remote_qcow2_path }}"
+        owner: qemu
+        group: qemu
+        mode: '0644'
 
     - name: Check if the VM is already defined
       ansible.builtin.command: virsh domstate "{{ vm_name }}"

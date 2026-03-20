@@ -9,7 +9,7 @@
     vm_vcpus: 4
     
     # Image Paths
-    local_qcow2_path: "/aap/c8000v.qcow2"
+    local_qcow2_path: "/root/c8000v.qcow2"
     remote_qcow2_path: "/var/lib/libvirt/images/{{ vm_name }}.qcow2"
     
     # Networking and OS

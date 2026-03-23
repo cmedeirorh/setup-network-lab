@@ -30,6 +30,7 @@
           - libvirt
           - virt-install
           - python3-libvirt
+          - cockpit
         state: present
 
     - name: Ensure libvirtd service is started and enabled
